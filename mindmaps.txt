@@ -1,0 +1,48 @@
+
+
+                           ┌─────────────────────────────┐
+                           │   CENTRAL SERVER PROCESS    │
+                           └──────────────┬──────────────┘
+                                          │
+                  ┌───────────────────────┴───────────────────────┐
+                  ▼ (Thread A: Detached)                          ▼ (Thread B: Main Loop)
+       ┌─────────────────────────────┐                 ┌─────────────────────────────┐
+       │     LOCAL DB SERVER         │                 │      PUBLIC AGENT API       │
+       │    (127.0.0.1:8080)         │                 │       (0.0.0.0:6060)        │
+       └──────────────┬──────────────┘                 └──────────────┬──────────────┘
+                      │                                               │
+         ┌────────────┴────────────┐                     ┌────────────┴────────────┐
+         ▼                         ▼                     ▼                         ▼
+   [GET /panel]              [POST /sendcommand]   [GET /getsnack]           [POST /givesnack]
+   • Loads Dashboard.html    • Reads 'agent_ip'    • Identifies caller IP.   • Captures raw terminal
+   • Replaces {{AGENT_LIST}}   and 'command' text. • Pops command from       output text string
+     with active maps.       • Pushes string to      matching IP queue.      via `req.body`.
+   • Replaces {{RESULT_LOG}}   `Agent_Command_queue` • Returns command or    • Appends output text
+     with tracking vectors.  • Sends HTTP 302        "NOP" string to         into `Agent_Input`
+   • Renders page to user.     Redirection status    connecting target       IP history vector.
+                               back to /panel.       machine.
+                      │                    │                      ▲                         ▲
+                      │                    │                      │                         │
+                      ▼                    └───────────┐          │                         │
+            ┌───────────────────┐                      │          │                         │
+            │ OPERATOR INTERFACE│                      ▼          │                         │
+            │ (Your Web Browser)│             ┌───────────────────┴─────────────────────────┴─┐
+            └───────────────────┘             │         GLOBAL MEMORY ENGINE                  │
+                                              │                                               │
+                                              │  • Agent_Command_queue Map                    │
+                                              │    [IP String Key] -> [FIFO text Queue]       │
+                                              │                                               │
+                                              │  • Agent_Input Map                            │
+                                              │    [IP String Key] -> [Growing history Vector]│
+                                              └───────────────────────────────────────────────┘
+                                                                  ▲                         ▲
+                                                                  │ (HTTP GET)              │ (HTTP POST)
+                                                                  │                         │
+                                                       ┌──────────┴─────────────────────────┴─┐
+                                                       │        REMOTE TARGET AGENT           │
+                                                       │        (Windows Sandbox/VM)          │
+                                                       └──────────────────────────────────────┘
+                                                       • Runs an infinite background loop.
+                                                       • Intercepts 'cd' via `_chdir()`.
+                                                       • Pipes system actions via `_popen()`.
+
