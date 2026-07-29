@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>  
+    <head>
+        <title> C2 Control Panel </title>
+        <style>
+            :root {
+                --bg-black: #050307;
+                --terminal-dark: #0a0710;
+                --matrix-purple: #9d4edd;
+                --bright-purple: #c77dff;
+                --dim-purple: #3c165a;
+                --text-green: #39ff14; 
+                --border-glow: #240046;
+            }
+            
+            body {
+                background-color: var(--bg-black);
+                color: var(--bright-purple);
+                font-family: 'Courier New', Courier, monospace;
+                margin: 0;
+                padding: 40px 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            /* Terminal Scanline Effect */
+            body::before {
+                content: " ";
+                display: block;
+                position: fixed;
+                top: 0; left: 0; bottom: 0; right: 0;
+                background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+                z-index: 1000;
+                background-size: 100% 4px, 6px 100%;
+                pointer-events: none;
+            }
+
+            .terminal-box {
+                width: 100%;
+                /* FIXED: Expanded maximum layout width from 600px to 900px for large text payloads */
+                max-width: 900px; 
+                background-color: var(--terminal-dark);
+                padding: 30px; /* Bushed padding out slightly for breathing room */
+                border: 1px solid var(--matrix-purple);
+                border-radius: 4px;
+                box-shadow: 0 0 20px var(--dim-purple);
+                position: relative;
+            }
+
+            /* Terminal Header Bar */
+            .terminal-header {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px solid var(--dim-purple);
+                padding-bottom: 10px;
+                margin-bottom: 25px;
+                font-size: 13px; /* Slightly bumped label font size */
+                color: var(--matrix-purple);
+                letter-spacing: 1px;
+            }
+
+            h1 {
+                color: #ffffff;
+                font-size: 24px; /* Boosted Header title size */
+                margin: 0;
+                text-shadow: 0 0 8px var(--matrix-purple);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+
+            .welcome-text {
+                color: var(--text-green);
+                margin-top: 8px;
+                margin-bottom: 30px;
+                font-size: 14px; /* Slightly cleaner viewing sizing */
+                text-shadow: 0 0 5px rgba(57, 255, 20, 0.5);
+            }
+
+            .welcome-text::before {
+                content: "[+] ";
+            }
+
+            label {
+                display: block;
+                color: var(--matrix-purple);
+                font-size: 15px; /* Enhanced label font sizing */
+                font-weight: bold;
+                margin-bottom: 8px;
+            }
+
+            label::before {
+                content: "> ";
+            }
+
+            input[type='type'], input[type='text'] {
+                width: 100%;
+                padding: 12px; /* Enhanced padding depth */
+                background-color: #000000;
+                border: 1px solid var(--dim-purple);
+                border-radius: 2px;
+                color: #ffffff;
+                box-sizing: border-box;
+                margin-bottom: 25px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 15px; /* Clean input readable scaling */
+                transition: all 0.3s ease;
+            }
+
+            input[type='type']:focus, input[type='text']:focus {
+                outline: none;
+                border-color: var(--bright-purple);
+                box-shadow: 0 0 10px var(--dim-purple);
+            }
+
+            input[type='submit'] {
+                width: 100%;
+                background-color: transparent;
+                color: var(--bright-purple);
+                border: 1px solid var(--bright-purple);
+                padding: 14px; /* Prominent interaction button structure */
+                border-radius: 2px;
+                font-family: 'Courier New', Courier, monospace;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 15px; /* Text visibility bump */
+                text-transform: uppercase;
+                transition: all 0.2s ease;
+                box-shadow: inset 0 0 4px var(--dim-purple);
+            }
+
+            input[type='submit']:hover {
+                background-color: var(--matrix-purple);
+                color: #000000;
+                box-shadow: 0 0 15px var(--bright-purple);
+            }
+
+            hr {
+                border: 0;
+                border-top: 1px dashed var(--dim-purple);
+                margin: 30px 0;
+            }
+
+            h3 {
+                color: var(--bright-purple);
+                font-size: 17px; /* Increased Section Headers sizing */
+                margin-top: 0;
+                margin-bottom: 18px;
+                text-transform: uppercase;
+            }
+
+            h3::before {
+                content: "[#] ";
+            }
+
+            ul {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+                color: var(--matrix-purple);
+            }
+
+            ul li {
+                padding: 8px 12px;
+                background-color: rgba(0, 0, 0, 0.5);
+                border-left: 3px solid var(--matrix-purple);
+                margin-bottom: 8px;
+                font-size: 14px; /* Text adjustments for cleaner reading */
+            }
+
+            /* FIXED: Enhanced Log Container dimensions and parameters */
+            .log-container {
+                background-color: #000000;
+                border: 1px solid var(--dim-purple);
+                border-radius: 2px;
+                padding: 15px;
+                /* Changed max-height from 200px to 450px to fit complex directory returns */
+                max-height: 450px; 
+                overflow-y: auto;
+                font-size: 14px; /* Upgraded code result text scalability */
+                color: var(--matrix-purple);
+                white-space: pre-wrap; 
+            }
+
+            /* Added clean custom scrollbar adjustments for our dark terminal view */
+            .log-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            .log-container::-webkit-scrollbar-track {
+                background: #000000;
+            }
+            .log-container::-webkit-scrollbar-thumb {
+                background: var(--dim-purple);
+                border-radius: 2px;
+            }
+            .log-container::-webkit-scrollbar-thumb:hover {
+                background: var(--matrix-purple);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="terminal-box">
+            <div class="terminal-header">
+                <span>SESSION: ACTIVE</span>
+                <span>SYS_STATUS: NOMINAL</span>
+            </div>
+
+            <h1>C2 Dashboard Panel</h1>
+            <p class="welcome-text">Welcome, Lunatic</p>
+
+            <form action='/sendcommand' method='POST'>
+
+                <label>Agent IP:</label>
+                <input type='type' name='agent_ip' placeholder='e.g., 192.168.1.5' required>
+                
+                <label>Command:</label>
+                <input type='text' name='command' placeholder='e.g., whoami' required>
+                
+                <input type='submit' value='Execute :: Queue Command'>
+
+            </form>
+        
+            <hr>
+
+            <h3>Discovered/Active Agents:</h3>
+            <ul>
+                <!-- This placeholder text will be replaced dynamically by C++ server -->
+                {{AGENT_LIST}}
+            </ul>
+
+            <hr>
+
+            <h3>Command Execution Logs:</h3>
+            <div class="log-container">
+                {{RESULT_LOG}}
+            </div>
+        </div>
+    </body>
+</html>
